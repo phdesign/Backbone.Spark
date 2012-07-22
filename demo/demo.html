@@ -1,0 +1,105 @@
+<!doctype html>
+<!--
+ * Copyright (c) 2012 Paul Heasley
+ * www.phdesign.com.au
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+-->
+
+<html>
+<head>
+    <title>Backbone.Spark Demo</title>  
+    <script src="js/libs/json2.js"></script>
+    <script src="js/libs/underscore-1.3.1.js"></script>
+    <script src="js/libs/backbone.js"></script>
+    <script src="../src/backbone.spark.js"></script>
+    <script type="text/javascript">
+
+var Demo = Backbone.Spark.Model.extend({
+
+    defaults: function() {
+      return {
+        filePath: null
+      };
+    },
+
+    sparks: {
+
+        extn: function(key, value, options, set) {
+            if (arguments.length === 0) {
+                var i = this.filePath.lastIndexOf('.');
+                return i >= 0 ? this.filePath.substr(i) : '';
+            } else {
+                var filePath = this.get('filePath'),
+                    i = filePath.lastIndexOf('.');
+
+                if (i >= 0)
+                    this.set('filePath', filePath.substr(0, i) + value);
+            }
+        }.dependsOn('filePath'),
+
+        folderPath: function() {
+            if (!this.filePath) return '';
+            var i = this.filePath.lastIndexOf('/');
+            return i >= 0 ? this.filePath.substring(0, i) : ''; 
+        }.dependsOn('filePath'),
+
+    }
+
+});
+
+window.onload = function() {
+    var content = document.getElementById('content'),
+        demo = new Demo();
+
+    function writeLine(msg) {
+        content.innerHTML = content.innerHTML + msg + '<br/>';
+    }
+
+    demo.on('change', function() { 
+        writeLine('Something changed<br/>'); 
+    });
+    demo.on('change:filePath', function(m, v) { 
+        writeLine('filePath changed to ' + v ); 
+    });
+    demo.on('change:extn', function(m, v) { 
+        writeLine('extn changed to ' + v); 
+    });
+    demo.on('change:folderPath', function(m, v) { 
+        writeLine('folderPath changed to ' + v); 
+    });
+
+    writeLine('Setting filePath to \'/projects/test.html\'');
+    demo.set('filePath', '/projects/test.html');
+
+    writeLine('');
+    writeLine('Getting folderPath value: ' + demo.get('folderPath'));
+
+    writeLine('');
+    writeLine('Setting extn to \'.js\'');
+    demo.set('extn', '.js');
+
+    writeLine('');
+    writeLine('Getting extn value: ' + demo.get('extn'));
+
+    writeLine('');
+    writeLine('toJSON result: ')
+    writeLine('<pre>' + JSON.stringify(demo.toJSON()) + '<pre>');
+}
+
+    </script>
+</head>
+<body>
+    <div id="content"></div>
+</body>
+</html>

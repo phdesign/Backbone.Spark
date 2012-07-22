@@ -1,6 +1,8 @@
 /*
  * Backbone.Spark v1.0
- * Copyright 2012 Paul Heasley
+ * Works with Backbone.js 0.9.2
+ * Copyright (c) 2012 Paul Heasley
+ * www.phdesign.com.au
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +17,46 @@
  * limitations under the License.
  *
  * Backbone.Spark is largely based off Backbone.Mutators, see the included
- * NOTICE file for details on Backbone.Mutators license detils.
+ * NOTICE file for Backbone.Mutators license detils.
  */
+
+/*
+Usage
+-----
+
+var Demo = Backbone.Spark.Model.extend({
+
+    defaults: function() {
+      return {
+        filePath: null
+      };
+    },
+
+    sparks: {
+
+        extn: function(key, value, options, set) {
+            if (arguments.length === 0) {
+                var i = this.filePath.lastIndexOf('.');
+                return i >= 0 ? this.filePath.substr(i) : '';
+            } else {
+                var filePath = this.get('filePath'),
+                    i = filePath.lastIndexOf('.');
+
+                if (i >= 0)
+                    this.set('filePath', filePath.substr(0, i) + value);
+            }
+        }.dependsOn('filePath'),
+
+        folderPath: function() {
+            if (!this.filePath) return '';
+            var i = this.filePath.lastIndexOf('/');
+            return i >= 0 ? this.filePath.substring(0, i) : ''; 
+        }.dependsOn('filePath'),
+
+    }
+
+});
+*/
  
 Backbone.Spark = (function (_, Backbone, undef){
     var Spark = {},

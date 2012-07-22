@@ -5,6 +5,21 @@ Provides computed property support for [Backbone.js](http://backbonejs.org/).
 Rather than providing an attribute you can provide a spark function which returns a computed value, or sets a computed value.
 The interface is based on [Ember's](http://emberjs.com/) computed properties, most of the implementation is based on [Backbone.Mutators](https://github.com/asciidisco/Backbone.Mutators). 
 
+Installation
+------------
+
+Add a reference to the Backbone.Spark library, e.g. 
+```html
+<script src="js/libs/backbone.spark.js"></script>
+```
+After your Backbone include.
+
+Dependencies
+------------
+
+Requires [Backbone.js](http://backbonejs.org/) and [Underscore.js](http://underscorejs.org/).
+Works with Backbone.js 0.9.2 and Underscore.js 1.3.1.
+
 Usage
 -----
 
@@ -76,19 +91,126 @@ App.File = Backbone.Spark.Model.extend({
 });
 ```
 
-Installation
-------------
+Examples
+--------
 
-Add 
+The following example is available in the /demo folder.
+
 ```html
-<script src="js/libs/backbone.spark.js"></script>
+<!doctype html>
+<html>
+<head>
+    <title>Backbone.Spark Demo</title>  
+    <script src="js/libs/json2.js"></script>
+    <script src="js/libs/underscore-1.3.1.js"></script>
+    <script src="js/libs/backbone.js"></script>
+    <script src="../src/backbone.spark.js"></script>
+    <script type="text/javascript">
+
+var Demo = Backbone.Spark.Model.extend({
+
+    defaults: function() {
+      return {
+        filePath: null
+      };
+    },
+
+    sparks: {
+
+        extn: function(key, value, options, set) {
+            if (arguments.length === 0) {
+                var i = this.filePath.lastIndexOf('.');
+                return i >= 0 ? this.filePath.substr(i) : '';
+            } else {
+                var filePath = this.get('filePath'),
+                    i = filePath.lastIndexOf('.');
+
+                if (i >= 0)
+                    this.set('filePath', filePath.substr(0, i) + value);
+            }
+        }.dependsOn('filePath'),
+
+        folderPath: function() {
+            if (!this.filePath) return '';
+            var i = this.filePath.lastIndexOf('/');
+            return i >= 0 ? this.filePath.substring(0, i) : ''; 
+        }.dependsOn('filePath'),
+
+    }
+
+});
+
+window.onload = function() {
+    var content = document.getElementById('content'),
+        demo = new Demo();
+
+    function writeLine(msg) {
+        content.innerHTML = content.innerHTML + msg + '<br/>';
+    }
+
+    demo.on('change', function() { 
+        writeLine('Something changed<br/>'); 
+    });
+    demo.on('change:filePath', function(m, v) { 
+        writeLine('filePath changed to ' + v ); 
+    });
+    demo.on('change:extn', function(m, v) { 
+        writeLine('extn changed to ' + v); 
+    });
+    demo.on('change:folderPath', function(m, v) { 
+        writeLine('folderPath changed to ' + v); 
+    });
+
+    writeLine('Setting filePath to \'/projects/test.html\'');
+    demo.set('filePath', '/projects/test.html');
+
+    writeLine('');
+    writeLine('Getting folderPath value: ' + demo.get('folderPath'));
+
+    writeLine('');
+    writeLine('Setting extn to \'.js\'');
+    demo.set('extn', '.js');
+
+    writeLine('');
+    writeLine('Getting extn value: ' + demo.get('extn'));
+
+    writeLine('');
+    writeLine('toJSON result: ')
+    writeLine('<pre>' + JSON.stringify(demo.toJSON()) + '<pre>');
+}
+
+    </script>
+</head>
+<body>
+    <div id="content"></div>
+</body>
+</html>
 ```
-After your Backbone include for the page.
 
-Dependencies
-------------
+Which results in:
 
-Requires [Backbone.js](http://backbonejs.org/) and [Underscore.js](http://underscorejs.org/).
+```text
+Setting filePath to '/projects/test.html'
+extn changed to .html
+folderPath changed to /projects
+filePath changed to /projects/test.html
+Something changed
+
+
+Getting folderPath value: /projects
+
+Setting extn to '.js'
+extn changed to .js
+folderPath changed to /projects
+filePath changed to /projects/test.js
+Something changed
+
+
+Getting extn value: .js
+
+toJSON result: 
+{"filePath":"/projects/test.js","extn":".js","folderPath":"/projects"}
+```
 
 Version History
 ---------------
