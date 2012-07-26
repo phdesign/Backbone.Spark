@@ -86,7 +86,7 @@ Backbone.Spark = (function (_, Backbone, undef){
 
         _.each(changes, function(spark) {
             // Invalidate cache
-            delete this._cache[spark];
+            this.clearSparkVal(spark);
             // Trigger change
             this.trigger('change:' + spark, this, this.get(spark));
         }, this);
@@ -97,28 +97,44 @@ Backbone.Spark = (function (_, Backbone, undef){
     Spark.Model = Backbone.Model.extend({
 
         constructor: function Base(attributes, options) {
-            _super.constructor.apply(this, arguments);
+            var cache = {}, 
+                self = this,
+                hasSparks = this.sparks !== undef;
 
+            _super.constructor.apply(this, arguments);
             // For caching spark values
-            this._cache = {};
+            this.getSparkVal = function(spark) {
+                var val;
+                // Check for cached value
+                if (cache.hasOwnProperty(spark))
+                    return cache[spark]; 
+
+                val = self.sparks[spark].call(self);
+                // Update cache
+                if (self.sparks[spark]._noCache !== true)
+                    cache[spark] = val;
+                return val;
+            };
+            this.setSparkVal = function(spark, val, options) {
+                // Parameters are the spark name, spark function, options and the base set function.
+                self.sparks[spark].call(self, spark, val, options, _.bind(_super.set, self));
+                // Update cache
+                if (self.sparks[spark]._noCache !== true)
+                    self._cache[spark] = val;
+            };
+            this.clearSparkVal = function(spark) {
+                delete cache[spark];
+            };
             // Monitor for change events to the dependents
             this.on('change', triggerChanges, this);
         },
 
         get: function (attr) {
-            var val,
-                hasSparks = this.sparks !== undef;
+            var hasSparks = this.sparks !== undef;
 
             // If the attribute is a spark return the result of the function
             if (hasSparks === true && _.isFunction(this.sparks[attr]) === true) {
-                // Check for cached value
-                if (this._cache.hasOwnProperty(attr))
-                    return this._cache[attr]; 
-                val = _.bind(this.sparks[attr], this)();
-                // Update cache
-                if (this.sparks[attr]._noCache !== true)
-                    this._cache[attr] = val;
-                return val;
+                return this.getSparkVal(attr);
             }
 
             // Otherwise just delegate to the standard backbone get function.
@@ -146,11 +162,7 @@ Backbone.Spark = (function (_, Backbone, undef){
                 // For each 'set' attribute, if it's a spark then set the spark value.
                 for (attr in attrs) {
                     if (_.isFunction(this.sparks[attr]) === true) {
-                        // Parameters are the spark name, spark function, options and the base set function.
-                        _.bind(this.sparks[attr], this)(attr, attrs[attr], options, _.bind(_super.set, this));
-                        // Update cache
-                        if (this.sparks[attr]._noCache !== true)
-                            this._cache[attr] = attrs[attr];
+                        this.setSparkVal(attr, attrs[attr], options);
                         // Support setting combinations of real attributes and sparks in the same call.
                         delete attrs[attr];
                     }
@@ -164,21 +176,11 @@ Backbone.Spark = (function (_, Backbone, undef){
         },
 
         toJSON: function () {
-            var val,
-                obj = _super.toJSON.call(this);
+            var obj = _super.toJSON.call(this);
             // Add all the sparks at the exported object.
             _.each(this.sparks, _.bind(function (property, name) {
                 if (_.isFunction(this.sparks[name])) {
-                    // Check for cached value
-                    if (this._cache.hasOwnProperty(name)) {
-                        obj[name] = this._cache[name];
-                    } else {
-                        val = _.bind(this.sparks[name], this)();
-                        obj[name] = val;
-                        // Update cache
-                        if (this.sparks[name]._noCache !== true)
-                            this._cache[name] = val;
-                    }
+                    obj[name] = this.getSparkVal(name);
                 }
             }, this));
 
