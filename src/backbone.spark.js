@@ -99,7 +99,7 @@ Backbone.Spark = (function (_, Backbone, undef){
 
             // If the attribute is a spark return the result of the function
             if (hasSparks === true && _.isFunction(this.sparks[attr]) === true) {
-                return _.bind(this.sparks[attr], this.attributes)();
+                return _.bind(this.sparks[attr], this)();
             }
 
             // Otherwise just delegate to the standard backbone get function.
@@ -146,7 +146,7 @@ Backbone.Spark = (function (_, Backbone, undef){
             // Add all the sparks at the exported object.
             _.each(this.sparks, _.bind(function (property, name) {
                 if (_.isFunction(this.sparks[name])) {
-                    obj[name] = _.bind(this.sparks[name], this.attributes)();
+                    obj[name] = _.bind(this.sparks[name], this)();
                 }
             }, this));
 
