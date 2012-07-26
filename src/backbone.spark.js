@@ -66,6 +66,10 @@ Backbone.Spark = (function (_, Backbone, undef){
     // This code is largely a copy of the Ember property() code.
     Function.prototype.dependsOn = function() {
         this._dependentKeys = Array.prototype.slice.call(arguments);
+        this.noCache = function() {
+            this._noCache = true;
+            return this;
+        };
         return this;
     };
 
@@ -102,14 +106,19 @@ Backbone.Spark = (function (_, Backbone, undef){
         },
 
         get: function (attr) {
-            var hasSparks = this.sparks !== undef;
+            var val,
+                hasSparks = this.sparks !== undef;
 
             // If the attribute is a spark return the result of the function
             if (hasSparks === true && _.isFunction(this.sparks[attr]) === true) {
                 // Check for cached value
                 if (this._cache.hasOwnProperty(attr))
                     return this._cache[attr]; 
-                return _.bind(this.sparks[attr], this)();
+                val = _.bind(this.sparks[attr], this)();
+                // Update cache
+                if (this.sparks[attr]._noCache !== true)
+                    this._cache[attr] = val;
+                return val;
             }
 
             // Otherwise just delegate to the standard backbone get function.
@@ -140,7 +149,8 @@ Backbone.Spark = (function (_, Backbone, undef){
                         // Parameters are the spark name, spark function, options and the base set function.
                         _.bind(this.sparks[attr], this)(attr, attrs[attr], options, _.bind(_super.set, this));
                         // Update cache
-                        this._cache[attr] = attrs[attr];
+                        if (this.sparks[attr]._noCache !== true)
+                            this._cache[attr] = attrs[attr];
                         // Support setting combinations of real attributes and sparks in the same call.
                         delete attrs[attr];
                     }
@@ -154,15 +164,21 @@ Backbone.Spark = (function (_, Backbone, undef){
         },
 
         toJSON: function () {
-            var obj = _super.toJSON.call(this);
+            var val,
+                obj = _super.toJSON.call(this);
             // Add all the sparks at the exported object.
             _.each(this.sparks, _.bind(function (property, name) {
                 if (_.isFunction(this.sparks[name])) {
                     // Check for cached value
-                    if (this._cache.hasOwnProperty(name)) 
+                    if (this._cache.hasOwnProperty(name)) {
                         obj[name] = this._cache[name];
-                    else 
-                        obj[name] = _.bind(this.sparks[name], this)();
+                    } else {
+                        val = _.bind(this.sparks[name], this)();
+                        obj[name] = val;
+                        // Update cache
+                        if (this.sparks[name]._noCache !== true)
+                            this._cache[name] = val;
+                    }
                 }
             }, this));
 

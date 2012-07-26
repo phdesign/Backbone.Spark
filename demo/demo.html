@@ -47,7 +47,7 @@ var Demo = Backbone.Spark.Model.extend({
                 if (i >= 0)
                     this.set('filePath', filePath.substr(0, i) + value);
             }
-        }.dependsOn('filePath'),
+        }.dependsOn('filePath').noCache(),
 
         folderPath: function() {
             if (!this.get('filePath')) return '';
