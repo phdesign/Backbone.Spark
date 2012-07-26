@@ -1,5 +1,5 @@
 /*
- * Backbone.Spark v1.0
+ * Backbone.Spark v1.1
  * Works with Backbone.js 0.9.2
  * Copyright (c) 2012 Paul Heasley
  * www.phdesign.com.au
@@ -69,30 +69,29 @@ Backbone.Spark = (function (_, Backbone, undef){
         return this;
     };
 
+    function triggerChanges(model, options) {
+        var spark, sparkFunc, key, dependent, changes = [];
+
+        for (spark in this.sparks) {
+            sparkFunc = this.sparks[spark];
+            if (sparkFunc._dependentKeys !== undef) {
+                if (_.any(sparkFunc._dependentKeys, this.hasChanged, this))
+                    changes.push(spark);
+            }
+        }
+
+        _.each(changes, function(spark) {
+            this.trigger('change:' + spark, this, this.get(spark));
+        }, this);
+    }
+
     // Extend the backbone model so that we can override the constructor and provide
     // event listeners for the dependent properties.
     Spark.Model = Backbone.Model.extend({
 
         constructor: function Base(attributes, options) {
-            var spark,
-                sparkFunc;
             _super.constructor.apply(this, arguments);
-
-            // For each spark, add an event listener for each dependent property and 
-            // when the dependent is changed, raise a change event for the spark.
-            for (spark in this.sparks) {
-                sparkFunc = this.sparks[spark];
-                if (sparkFunc._dependentKeys !== undef) {
-                    for (var dependent in sparkFunc._dependentKeys) {
-                        // Need a closure here so we access the *current* value of spark and sparkFunc, not the last one.
-                        _.bind(function(spark, sparkFunc) {
-                            this.on('change:' + sparkFunc._dependentKeys[dependent], function(model, value) {
-                                this.trigger('change:' + spark, this, this.get(spark));
-                            }, this);
-                        }, this)(spark, sparkFunc);
-                    }
-                }
-            }
+            this.on('change', triggerChanges, this);
         },
 
         get: function (attr) {

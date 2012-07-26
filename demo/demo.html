@@ -29,7 +29,8 @@ var Demo = Backbone.Spark.Model.extend({
 
     defaults: function() {
       return {
-        filePath: null
+        filePath: null,
+        root: null
       };
     },
 
@@ -53,6 +54,10 @@ var Demo = Backbone.Spark.Model.extend({
             var i = this.filePath.lastIndexOf('/');
             return i >= 0 ? this.filePath.substring(0, i) : ''; 
         }.dependsOn('filePath'),
+
+        fullFilePath: function() {
+            return this.root + this.filePath;
+        }.dependsOn('filePath', 'root')
 
     }
 
@@ -78,9 +83,15 @@ window.onload = function() {
     demo.on('change:folderPath', function(m, v) { 
         writeLine('folderPath changed to ' + v); 
     });
+    demo.on('change:fullFilePath', function(m, v) { 
+        writeLine('fullFilePath changed to ' + v); 
+    });
 
     writeLine('Setting filePath to \'/projects/test.html\'');
     demo.set('filePath', '/projects/test.html');
+
+    writeLine('Setting root to \'/usr\'');
+    demo.set('root', '/usr');
 
     writeLine('');
     writeLine('Getting folderPath value: ' + demo.get('folderPath'));
@@ -95,6 +106,9 @@ window.onload = function() {
     writeLine('');
     writeLine('toJSON result: ')
     writeLine('<pre>' + JSON.stringify(demo.toJSON()) + '<pre>');
+
+    writeLine('Setting multiple dependants for fullFilePath');
+    demo.set({filePath: '/projects/test.html', root: '/bin'});
 }
 
     </script>
