@@ -2,7 +2,8 @@ Backbone.Spark
 ==============
 
 Provides computed property support for [Backbone.js](http://backbonejs.org/). 
-Rather than providing an attribute you can provide a spark function which returns a computed value, or sets a computed value.
+Rather than providing an attribute you can provide a spark function which returns a computed value, or sets a computed value. 
+Computed values are cached for fast retrieval, caching can be disabled.
 The interface is based on [Ember's](http://emberjs.com/) computed properties, most of the implementation is based on [Backbone.Mutators](https://github.com/asciidisco/Backbone.Mutators). 
 
 Installation
@@ -212,8 +213,30 @@ toJSON result:
 {"filePath":"/projects/test.js","extn":".js","folderPath":"/projects"}
 ```
 
+Caching
+-------
+
+Whenever a spark value is retrieved or set, it is cached for faster future retrieval.
+When a dependent attributes changes the cache is cleared to allow re-computation of the value.
+To disable caching for a spark, call .noCache(), e.g. 
+
+```javascript
+folderPath: function() {
+
+    if (!this.filePath) return '';
+    var i = this.filePath.lastIndexOf('/');
+    return i >= 0 ? this.filePath.substring(0, i) : ''; 
+
+}.dependsOn('filePath').noCache()
+```
+
 Version History
 ---------------
+
+### v1.1
+* Made context of getter and setter functions consistent
+* Only raise one spark change per change event
+* Implement automatic caching
 
 ### v1.0
 * Initial release
