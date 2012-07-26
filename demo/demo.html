@@ -109,6 +109,14 @@ window.onload = function() {
 
     writeLine('Setting multiple dependants for fullFilePath');
     demo.set({filePath: '/projects/test.html', root: '/bin'});
+
+    writeLine('');
+    writeLine('Setting filePath to \'/projects/test2.html\' silently');
+    demo.set('filePath', '/projects/test2.html', { silent: true });
+
+    writeLine('');
+    writeLine('Now call change');
+    demo.change();
 }
 
     </script>
