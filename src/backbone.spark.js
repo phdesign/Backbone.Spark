@@ -81,9 +81,10 @@ Backbone.Spark = (function (_, Backbone, undef){
         }
 
         _.each(changes, function(spark) {
-            this.trigger('change:' + spark, this, this.get(spark));
             // Invalidate cache
             delete this._cache[spark];
+            // Trigger change
+            this.trigger('change:' + spark, this, this.get(spark));
         }, this);
     }
 
