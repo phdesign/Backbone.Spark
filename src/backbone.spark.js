@@ -97,10 +97,11 @@ Backbone.Spark = (function (_, Backbone, undef){
     Spark.Model = Backbone.Model.extend({
 
         constructor: function Base(attributes, options) {
-            _super.constructor.apply(this, arguments);
-
             // For caching spark values
             this._cache = {};
+
+            _super.constructor.apply(this, arguments);
+
             // Monitor for change events to the dependents
             this.on('change', triggerChanges, this);
         },
